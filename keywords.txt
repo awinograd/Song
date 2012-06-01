@@ -1,0 +1,5 @@
+Song KEYWORD1
+loop KEYWORD2
+play KEYWORD2
+pause KEYWORD2
+setVolume KEYWORD2
