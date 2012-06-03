@@ -1,5 +1,14 @@
 Song KEYWORD1
+
+setup KEYWORD2
 loop KEYWORD2
 play KEYWORD2
 pause KEYWORD2
+seek KEYWORD2
 setVolume KEYWORD2
+getVolume KEYWORD2
+getCurrentSong KEYWORD2
+nextFile KEYWORD2
+prevFile KEYWORD2
+getFileSize KEYWORD2
+isPlaying KEYWORD2
