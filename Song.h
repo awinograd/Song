@@ -49,6 +49,7 @@ class Song
 	void map_current_song_to_fn();
 
 	void initPlayerStateFromEEPROM();
+	void get_title_from_id3tag();
 };
 
 #endif
