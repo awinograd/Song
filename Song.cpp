@@ -264,7 +264,7 @@ void Song::setup(){
   // it is the limiting factor, so we call its init function again.
 
   Mp3.begin(mp3_cs, dcs, rst, dreq);
-  Mp3.volume(mp3Volume);
+  setVolume(mp3Volume);
 
   // putting all of the root directory's songs into eeprom saves flash space.
 
@@ -281,6 +281,7 @@ void Song::pause(){
 	if (current_state != IDLE){
 		last_state = current_state;
 		current_state = IDLE;
+		EEPROM.write(EEPROM_STATE, current_state);
 	}
 }
 
@@ -288,6 +289,7 @@ void Song::play(){
 	if (current_state == IDLE){
 		//set current_state to last_state unless last_state was also IDLE, then set to DIR_PLAY
 		current_state = last_state != IDLE ? last_state : DIR_PLAY;
+		EEPROM.write(EEPROM_STATE, current_state);
 	}
 }
 
