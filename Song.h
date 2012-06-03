@@ -9,6 +9,18 @@
 class Song
 {
   public:
+
+/*struct TAGdata
+{
+	char tag[3];
+	char title[30];
+ 	char artist[30];
+	char album[30];
+	char year[4];
+	char comment[30];
+	char genre;
+};*/
+
 	Song();
 	void setup();
 	void loop();
@@ -21,6 +33,8 @@ class Song
 	bool nextFile();
 	bool prevFile();
 	int getFileSize();
+	bool isPlaying();
+	//struct TAGData getID3Data();
 
   private:
 	void sd_file_open();
@@ -33,6 +47,8 @@ class Song
 	void sd_card_setup();
 	void sd_dir_setup();
 	void map_current_song_to_fn();
+
+	void initPlayerStateFromEEPROM();
 };
 
 #endif

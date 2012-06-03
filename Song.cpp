@@ -32,13 +32,20 @@
 
 #define read_buffer   512        // size of the microsd read buffer
 #define mp3_vol       175        // default volume: 0=min, 254=max
-#define MAX_VOL       25
+#define MAX_VOL       254
+
+#define EEPROM_INIT_ID    33
+#define EEPROM_FIRSTRUN 0
+#define EEPROM_VOLUME   1
+#define EEPROM_TRACK    2
+#define EEPROM_STATE    3
 
 // file names are 13 bytes max (8 + '.' + 3 + '\0'), and the file list should
 // fit into the eeprom. for example, 13 * 40 = 520 bytes of eeprom are needed
 // to store a list of 40 songs. if you use shorter file names, or if your mcu
 // has more eeprom, you can change these.
 
+#define FILE_NAMES_START 32 //leave some room for persisting play info (vol, track, etc.)
 #define max_name_len  13
 #define max_num_songs 40
 
@@ -65,6 +72,8 @@ enum state {
 state current_state = DIR_PLAY;
 state last_state = DIR_PLAY;
 
+bool repeat = true;
+
 // you must open any song file that you want to play using sd_file_open prior
 // to fetching song data from the file. you can only open one file at a time.
 
@@ -75,6 +84,12 @@ void Song::sd_file_open() {
   map_current_song_to_fn();
   sd_file.open(&sd_root, fn, FILE_READ);
 
+  /*sd_file.seekSet(getFileSize() - 128);
+
+  struct TAGdata* tag = new struct TAGdata;
+  sd_file.read(tag, 128);
+  Serial.println(tag->title);*/
+
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
 
@@ -82,7 +97,7 @@ void Song::sd_file_open() {
 }
 
 bool Song::nextFileExists(){
-  if (current_song < (num_songs - 1) ){
+  if (current_song < (num_songs - 1) || repeat){
     return true; 
   }
   return false;
@@ -92,13 +107,16 @@ bool Song::nextFile(){
   if (!nextFileExists()){
 	  return false;
   }
-  current_song++; 
+
+  current_song++;// = (current_song + 1) % num_songs; 
   sd_file_open();
+
+  EEPROM.write(EEPROM_TRACK, current_song);
   return true;
 }
 
 bool Song::prevFileExists(){
-  if (current_song > 0 ){
+  if (current_song > 0){
     return true; 
   }
   return false;
@@ -108,8 +126,11 @@ bool Song::prevFile(){
   if (!prevFileExists()) {
 	  return false;
   }
+
   current_song--;
   sd_file_open();
+
+  EEPROM.write(EEPROM_TRACK, current_song);
   return true;
 }
 
@@ -137,9 +158,13 @@ int Song::getFileSize(){
 
 int Song::seek(int percent) {
   if (percent < 0 || percent > 100) return 0;
-  int size = sd_file.fileSize();
-  int seekPos = (percent * getFileSize()) / 100;
-  sd_file.seekSet(seekPos);  
+  uint16_t size = sd_file.fileSize();
+  uint16_t seekPos = percent * (getFileSize() / 100);
+  bool seeked = sd_file.seekSet(seekPos);  
+  Serial.println(seeked);
+  Serial.println(percent);
+  Serial.println(seekPos);
+  Serial.println(getFileSize());
   return seekPos;
 }
 
@@ -163,18 +188,23 @@ void Song::dir_play() {
   }
 }
 
+bool Song::isPlaying(){
+	return current_state == MP3_PLAY || current_state == DIR_PLAY;
+}
+
 double Song::setVolume(int volume_percentage){
 	double vol = volume_percentage /100.0;
 	double vol2 = pow(2.7182818, vol) * 93.8;
-  //if (volume_percentage < 0 || volume_percentage > 100) return mp3Volume;
-  //mp3Volume = (double)(volume_percentage / 100) * MAX_VOL;
 	mp3Volume = vol2;
-  Mp3.volume(mp3Volume);
-  return mp3Volume;
+	Mp3.volume(mp3Volume);
+	EEPROM.write(EEPROM_VOLUME, volume_percentage);
+	return mp3Volume;
 }
 
 int Song::getVolume(){
-	return mp3Volume;
+	double toReturn = mp3Volume/ 93.8;
+	toReturn = log(toReturn) * 100;
+	return toReturn;
 }
 
 // setup is pretty straightforward. initialize serial communication (used for
@@ -184,8 +214,39 @@ int Song::getVolume(){
 Song::Song() {
 }
 
+void Song::initPlayerStateFromEEPROM(){
+  if (EEPROM.read(EEPROM_FIRSTRUN) == EEPROM_INIT_ID){
+	//read persisted states from EEPROM
+	mp3Volume = EEPROM.read(EEPROM_VOLUME);
+	current_song = EEPROM.read(EEPROM_TRACK) - 1;
+	current_state = (state)EEPROM.read(EEPROM_STATE);
+	Serial.println("Reading player state from EEPROM");
+	Serial.print("Volume: ");
+	Serial.println(mp3Volume);
+	Serial.print("Song: ");
+	Serial.println(current_song);
+	Serial.print("State: ");
+	Serial.println(current_state);
+  }
+  else{
+	  mp3Volume = mp3_vol;
+	  current_song = -1;
+	  current_state = DIR_PLAY;
+	  EEPROM.write(EEPROM_FIRSTRUN, EEPROM_INIT_ID);
+	  EEPROM.write(EEPROM_VOLUME, mp3Volume);
+	  EEPROM.write(EEPROM_TRACK, current_song);
+	  EEPROM.write(EEPROM_STATE, current_state);
+	  Serial.println("First run: Initializing EEPROM state");
+  }
+}
+
 void Song::setup(){
   Serial.begin(9600);
+  //move current_song to -1 so that nextFile() will start at file 0
+  //current_song = 0;
+
+  initPlayerStateFromEEPROM();
+
   pinMode(SS_PIN, OUTPUT);  //SS_PIN must be output to use SPI
 
   // the default state of the mp3 decoder chip keeps the SPI bus from 
@@ -203,7 +264,7 @@ void Song::setup(){
   // it is the limiting factor, so we call its init function again.
 
   Mp3.begin(mp3_cs, dcs, rst, dreq);
-  Mp3.volume(mp3_vol);
+  Mp3.volume(mp3Volume);
 
   // putting all of the root directory's songs into eeprom saves flash space.
 
@@ -254,9 +315,6 @@ void Song::loop() {
     break;
   }
 }
-
-
-
 
 
 
@@ -352,14 +410,14 @@ void Song::sd_dir_setup() {
 
       for (unsigned char i = 0; i < 11; i++) {
         if (p.name[i] != ' ') {
-          EEPROM.write(num_songs * max_name_len + pos, p.name[i]);
+          EEPROM.write(FILE_NAMES_START + num_songs * max_name_len + pos, p.name[i]);
           pos++;
         }
       }
     
       // add an 'end of string' character to signal the end of the file name.
     
-      EEPROM.write(num_songs * max_name_len + pos, '\0');
+      EEPROM.write(FILE_NAMES_START + num_songs * max_name_len + pos, '\0');
       num_songs++;
     }
   }
@@ -378,7 +436,7 @@ void Song::map_current_song_to_fn() {
   // based on the current_song index, get song's name and null index position from eeprom.
   
   for (int i = 0; i < max_name_len; i++) {
-    fn[i] = EEPROM.read(current_song * max_name_len + i);
+    fn[i] = EEPROM.read(FILE_NAMES_START + current_song * max_name_len + i);
     
     // break if we reach the end of the file name.
     // keep track of the null index position, so we can put the '.' back.
