@@ -19,9 +19,8 @@ class Song
 	int getVolume();
 	bool nextFile();
 	bool prevFile();
-	int getFileSize();
+	uint16_t getFileSize();
 	bool isPlaying();
-	//struct TAGData getID3Data();
 
 	char* getTitle();
 	char* getArtist();

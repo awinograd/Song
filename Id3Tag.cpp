@@ -106,6 +106,8 @@ void Id3Tag::getId3Tag(char* value, unsigned char pb[], unsigned char c){
 
 	//add a null terminator at the new end of the title
 	value[tl/2] = '\0';
+	Serial.print("value: ");
+	Serial.println(value);
 	Serial.println("END getId3Tag");
 }
 
@@ -140,6 +142,7 @@ void Id3Tag::scan() {
     // to shift each one over to get it into its correct 'digits' position. a
     // quirk of the spec is that bit 7 (the msb) of each byte is set to 0.
     
+	//TODO calculate properly
     unsigned long v2l = ((unsigned long) pb[0] << (7 * 3)) +
                         ((unsigned long) pb[1] << (7 * 2)) +
                         ((unsigned long) pb[2] << (7 * 1)) + pb[3];
@@ -151,7 +154,7 @@ void Id3Tag::scan() {
 	Serial.print("id3 header length: ");
 	Serial.println(v2l);
 
-    for(int i = 0; i < 1000; i++){
+    for(int i = 0; i < 9000; i++){
       // read in bytes of the file, one by one, so we can check for the tags.
       
       sd_file->read(&c, 1);

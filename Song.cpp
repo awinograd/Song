@@ -99,12 +99,6 @@ void Song::sd_file_open() {
   sd_file.open(&sd_root, fn, FILE_READ);
   tag.scan();
 
-  /*sd_file.seekSet(getFileSize() - 128);
-
-  struct TAGdata* tag = new struct TAGdata;
-  sd_file.read(tag, 128);
-  Serial.println(tag->title);*/
-
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
 
@@ -168,7 +162,7 @@ void Song::mp3_play() {
   }
 }
 
-int Song::getFileSize(){
+uint16_t Song::getFileSize(){
 	return sd_file.fileSize();
 }
 
@@ -176,7 +170,7 @@ int Song::seek(int percent) {
   if (percent < 0 || percent > 100) return 0;
   uint16_t size = sd_file.fileSize();
   uint16_t seekPos = percent * (getFileSize() / 100);
-  bool seeked = sd_file.seekSet(seekPos);  
+  bool seeked = sd_file.seekSet(seekPos);
   Serial.println(seeked);
   Serial.println(percent);
   Serial.println(seekPos);
@@ -291,7 +285,6 @@ void Song::setup(){
   // the program is setup to enter DIR_PLAY mode immediately, so this call to
   // open the root directory before reaching the state machine is needed.
 
-  sd_file_open();
   Serial.println("Song setup");
 }
 
