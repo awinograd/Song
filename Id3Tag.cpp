@@ -14,8 +14,8 @@
 // so as to not to overflow the unsigned char data type.
 
 #define max_title_len 60
-#define max_artist_len 60
-#define max_album_len 60
+#define max_artist_len 30
+#define max_album_len 40
 #define max_year_len 4
 
 // next steps, declare the variables used later to represent microsd objects.
@@ -48,6 +48,14 @@ void Id3Tag::setSDFile(SdFile* file){
 
 char* Id3Tag::getTitle(){
 	return title;
+}
+
+char* Id3Tag::getArtist(){
+	return artist;
+}
+
+char* Id3Tag::getAlbum(){
+	return album;
 }
 
 // this utility function reads id3v1 and id3v2 tags, if any are present, from

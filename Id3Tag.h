@@ -10,6 +10,8 @@ class Id3Tag
 	void scan();
 
 	char* getTitle();
+	char* getArtist();
+	char* getAlbum();
   private:
 	void getId3Tag(char* value, unsigned char pb[], unsigned char c);
 

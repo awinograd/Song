@@ -443,8 +443,16 @@ void Song::sd_dir_setup() {
   }
 }
 
-char* Song::getCurrentSong(){
+char* Song::getTitle(){
 	return tag.getTitle();
+}
+
+char* Song::getArtist(){
+	return tag.getArtist();
+}
+
+char* Song::getAlbum(){
+	return tag.getAlbum();
 }
 
 // given the numerical index of a particular song to play, go to its location

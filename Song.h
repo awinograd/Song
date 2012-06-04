@@ -17,12 +17,15 @@ class Song
 	int seek(int percent);
 	double setVolume(int volume_percentage);
 	int getVolume();
-	char* getCurrentSong();
 	bool nextFile();
 	bool prevFile();
 	int getFileSize();
 	bool isPlaying();
 	//struct TAGData getID3Data();
+
+	char* getTitle();
+	char* getArtist();
+	char* getAlbum();
 
   private:
 	void sd_file_open();
