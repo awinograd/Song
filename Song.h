@@ -9,18 +9,6 @@
 class Song
 {
   public:
-
-/*struct TAGdata
-{
-	char tag[3];
-	char title[30];
- 	char artist[30];
-	char album[30];
-	char year[4];
-	char comment[30];
-	char genre;
-};*/
-
 	Song();
 	void setup();
 	void loop();
@@ -49,7 +37,6 @@ class Song
 	void map_current_song_to_fn();
 
 	void initPlayerStateFromEEPROM();
-	void get_title_from_id3tag();
 };
 
 #endif
