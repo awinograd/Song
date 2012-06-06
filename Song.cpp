@@ -214,10 +214,10 @@ void Song::dir_play() {
     // and the current_state is already set to IDLE from mp3_play()
 
     if (current_state == IDLE && nextFileExists()) {
+	  current_state = DIR_PLAY;
 	  handler->addKeyValuePair("message","Next Song", true);
       nextFile();
 	  handler->respond();
-      current_state = DIR_PLAY;
     }
   }
 }
