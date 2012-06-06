@@ -6,11 +6,13 @@
 #ifndef SONG_H
 #define SONG_H
 
+#include <JsonHandler.h>
+
 class Song
 {
   public:
 	Song();
-	void setup();
+	void setup(JsonHandler *handler);
 	void loop();
 	void pause();
 	void play();
@@ -26,9 +28,12 @@ class Song
 	char* getArtist();
 	char* getAlbum();
 	char* getTime();
-	void sendPlayerState();
 
+	void sendPlayerState();
+	void sendSongInfo();
   private:
+	JsonHandler *handler;
+
 	void sd_file_open();
 	bool nextFileExists();
 	bool prevFileExists();

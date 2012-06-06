@@ -93,7 +93,19 @@ bool repeat = true;
 int mp3Volume = mp3_vol;
 
 void Song::sendPlayerState(){
-	Serial.print("{'command':'CONNECTED', 'title':''}!");
+  char buff[5];
+  itoa(getVolume(), buff, 10);
+  handler->addKeyValuePair("command", "CONNECTED", true);
+  handler->addKeyValuePair("volume", buff);
+  sendSongInfo();
+}
+
+void Song::sendSongInfo(){
+  handler->addKeyValuePair("title", getTitle());
+  handler->addKeyValuePair("artist", getArtist());
+  handler->addKeyValuePair("album", getAlbum());
+  handler->addKeyValuePair("time", getTime());
+  handler->addKeyValuePair("state", isPlaying() ? "PLAYING" : "PAUSED" );
 }
 
 void Song::sd_file_open() {
@@ -259,10 +271,12 @@ void Song::initPlayerStateFromEEPROM(){
   }
 }
 
-void Song::setup(){
+void Song::setup(JsonHandler *_handler){
   Serial.begin(9600);
   //move current_song to -1 so that nextFile() will start at file 0
   //current_song = 0;
+
+  handler = _handler;
 
   initPlayerStateFromEEPROM();
 
