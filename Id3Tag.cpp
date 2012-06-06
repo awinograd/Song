@@ -102,19 +102,23 @@ void Id3Tag::getId3Tag(char* value, unsigned char pb[], unsigned char c){
     // read in tl bytes of the title itself. add an 'end-of-string' byte.
 
     sd_file->read(value, tl);
+	value[tl] = '\0';
 
-	// at odd indices title seems to have spaces so let's get rid of them
-	for(int i = 0; i < tl; i++){
-		if (i % 2 == 1) continue;
-		value[i/2] = value[i];
-		//Serial.print(title[i]);
+	if (value[1] == '\0'){
+		// at odd indices seem to have null terminators so let's get rid of them
+		for(int i = 0; i < tl; i++){
+			if (i % 2 == 1) continue;
+			value[i/2] = value[i];
+			//Serial.print(title[i]);
+		}
+
+		//add a null terminator at the new end of the title
+		value[tl/2] = '\0';
 	}
 
-	//add a null terminator at the new end of the title
-	value[tl/2] = '\0';
-	Serial.print("value: ");
-	Serial.println(value);
-	Serial.println("END getId3Tag");
+	//Serial.print("value: ");
+	//Serial.println(value);
+	//Serial.println("END getId3Tag");
 }
 
 void Id3Tag::clearBuffers(){
