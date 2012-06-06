@@ -40,6 +40,7 @@
 #define EEPROM_VOLUME   1
 #define EEPROM_TRACK    2
 #define EEPROM_STATE    3
+#define EEPROM_POSITION 4
 
 // file names are 13 bytes max (8 + '.' + 3 + '\0'), and the file list should
 // fit into the eeprom. for example, 13 * 40 = 520 bytes of eeprom are needed
@@ -93,7 +94,7 @@ bool repeat = true;
 int mp3Volume = mp3_vol;
 
 //positions to keep track of % of song played
-int currPosition = 0;
+int currPosition = -1;
 uint32_t bytesPlayed = 0;
 
 void Song::sendPlayerState(){
@@ -110,21 +111,24 @@ void Song::sendSongInfo(bool first){
   handler->addKeyValuePair("title", getTitle(), first);
   handler->addKeyValuePair("artist", getArtist());
   handler->addKeyValuePair("album", getAlbum());
-  handler->addKeyValuePair("time", getTime());
+  //handler->addKeyValuePair("time", getTime());
+  handler->addKeyValuePair("position", currPosition);
   handler->addKeyValuePair("state", isPlaying() ? "PLAYING" : "PAUSED" );
 }
 
 void Song::sd_file_open() {
 	Serial.println("sd_file_open()");
 	sd_file.close();
+
+  //reset position
+  currPosition = 0;
+  bytesPlayed = 0;
+
   map_current_song_to_fn();
   sd_file.open(&sd_root, fn, FILE_READ);
   tag.scan();
   sendSongInfo();
 
-  //reset position
-  currPosition = 0;
-  bytesPlayed = 0;
 
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
@@ -211,6 +215,7 @@ int Song::seek(int percent) {
   seeked = sd_file.seekSet(seekPos);
   currPosition = percent;
   bytesPlayed = seekPos;
+  EEPROM.write(EEPROM_POSITION, currPosition);
   return percent;
 }
 
@@ -268,7 +273,7 @@ void Song::initPlayerStateFromEEPROM(){
   if (EEPROM.read(EEPROM_FIRSTRUN) == EEPROM_INIT_ID){
 	//read persisted states from EEPROM
 	mp3Volume = EEPROM.read(EEPROM_VOLUME);
-	current_song = EEPROM.read(EEPROM_TRACK) - 1;
+	current_song = EEPROM.read(EEPROM_TRACK);
 	current_state = (state)EEPROM.read(EEPROM_STATE);
 	Serial.println("Reading player state from EEPROM");
 	Serial.print("Volume: ");
@@ -280,20 +285,20 @@ void Song::initPlayerStateFromEEPROM(){
   }
   else{
 	  mp3Volume = mp3_vol;
-	  current_song = -1;
+	  current_song = 0;
 	  current_state = DIR_PLAY;
+	  currPosition = 0;
 	  EEPROM.write(EEPROM_FIRSTRUN, EEPROM_INIT_ID);
 	  EEPROM.write(EEPROM_VOLUME, mp3Volume);
 	  EEPROM.write(EEPROM_TRACK, current_song);
 	  EEPROM.write(EEPROM_STATE, current_state);
+	  EEPROM.write(EEPROM_POSITION, currPosition);
 	  Serial.println("First run: Initializing EEPROM state");
   }
 }
 
 void Song::setup(JsonHandler *_handler){
   Serial.begin(9600);
-  //move current_song to -1 so that nextFile() will start at file 0
-  //current_song = 0;
 
   handler = _handler;
 
@@ -321,6 +326,12 @@ void Song::setup(JsonHandler *_handler){
   // putting all of the root directory's songs into eeprom saves flash space.
 
   sd_dir_setup();
+  sd_file_open();
+
+  //can't be read with other EEPROM settings b/c sd_file_open resets currPosition
+  //no need to worry about reading un-inited value b/c the initEEPROM case sets currPos
+  currPosition = EEPROM.read(EEPROM_POSITION);
+  seek(currPosition);
 
   // the program is setup to enter DIR_PLAY mode immediately, so this call to
   // open the root directory before reaching the state machine is needed.
