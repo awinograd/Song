@@ -17,6 +17,7 @@ class JsonHandler
 
 	void addKeyValuePair(const char* key, const char* val, bool firstPair);
 	void addKeyValuePair(const char* key, const char* val);
+	void addKeyValuePair(const char* key, int val);
   private:
 	void readChar(char &c);
 	

@@ -89,6 +89,12 @@ void JsonHandler::addKeyValuePair(const char* key, const char* val){
   addKeyValuePair(key, val, false); 
 }
 
+void JsonHandler::addKeyValuePair(const char* key, int val){
+  char buff[5];
+  itoa(val, buff, 10);
+  addKeyValuePair(key, buff, false); 
+}
+
 void JsonHandler::respond(){
 	Serial.println(strlen(response));
     Serial.println(response);

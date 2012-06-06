@@ -92,11 +92,13 @@ bool repeat = true;
 
 int mp3Volume = mp3_vol;
 
+//positions to keep track of % of song played
+int currPosition = 0;
+uint32_t bytesPlayed = 0;
+
 void Song::sendPlayerState(){
-  char buff[5];
-  itoa(getVolume(), buff, 10);
   handler->addKeyValuePair("command", "CONNECTED", true);
-  handler->addKeyValuePair("volume", buff);
+  handler->addKeyValuePair("volume", getVolume());
   sendSongInfo();
 }
 
@@ -119,6 +121,10 @@ void Song::sd_file_open() {
   sd_file.open(&sd_root, fn, FILE_READ);
   tag.scan();
   sendSongInfo();
+
+  //reset position
+  currPosition = 0;
+  bytesPlayed = 0;
 
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
@@ -172,13 +178,19 @@ void Song::mp3_play() {
 
     // send read_buffer bytes to be played. Mp3.play() tracks the index pointer
   // within the song being played of where to get the next read_buffer bytes.
-  if(seeked){
-	  Serial.println("POST SEEK:");
-	  Serial.println(sd_file.curPosition());
-	  seeked = false;
-  }
+  
   bytes_to_read = sd_file.read(bytes, read_buffer);
   Mp3.play(bytes, bytes_to_read);
+
+  bytesPlayed += bytes_to_read;
+
+  int pos = (bytesPlayed * 100)/getFileSize();
+  if ( pos > currPosition){
+	  currPosition = pos;
+	  handler->addKeyValuePair("command", "SEEK", true);
+	  handler->addKeyValuePair("position", currPosition);
+	  handler->respond();
+  }
 
   // bytes_to_read should only be less than read_buffer when the song's over.
 
@@ -197,7 +209,9 @@ int Song::seek(int percent) {
   uint32_t size = sd_file.fileSize();
   uint32_t seekPos = percent * (getFileSize() / 100);
   seeked = sd_file.seekSet(seekPos);
-  return seekPos;
+  currPosition = percent;
+  bytesPlayed = seekPos;
+  return percent;
 }
 
 // continue to play the current (playing) song, until there are no more songs
