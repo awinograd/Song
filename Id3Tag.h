@@ -12,9 +12,11 @@ class Id3Tag
 	char* getTitle();
 	char* getArtist();
 	char* getAlbum();
+	char* getTime();
+	char* getTag(const char* tag);
   private:
 	void getId3Tag(char* value, unsigned char pb[], unsigned char c);
-
+	void clearBuffers();
 };
 
 #endif

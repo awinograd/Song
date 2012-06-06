@@ -25,6 +25,8 @@ class Song
 	char* getTitle();
 	char* getArtist();
 	char* getAlbum();
+	char* getTime();
+	void sendPlayerState();
 
   private:
 	void sd_file_open();

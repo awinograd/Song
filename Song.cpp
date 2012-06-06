@@ -31,7 +31,7 @@
 
 // read_buffer is the amount of data read from microsd, then sent to decoder.
 
-#define read_buffer   512        // size of the microsd read buffer
+#define read_buffer   256        // size of the microsd read buffer
 #define mp3_vol       175        // default volume: 0=min, 254=max
 #define MAX_VOL       254
 
@@ -92,12 +92,18 @@ bool repeat = true;
 
 int mp3Volume = mp3_vol;
 
+void Song::sendPlayerState(){
+	Serial.print("{'command':'CONNECTED', 'title':''}!");
+}
+
 void Song::sd_file_open() {
 	Serial.println("sd_file_open()");
 	sd_file.close();
   map_current_song_to_fn();
   sd_file.open(&sd_root, fn, FILE_READ);
   tag.scan();
+  //sendPlayerState();
+
 
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
@@ -170,6 +176,7 @@ int Song::seek(int percent) {
   if (percent < 0 || percent > 100) return 0;
   uint16_t size = sd_file.fileSize();
   uint16_t seekPos = percent * (getFileSize() / 100);
+  sd_file.close();
   bool seeked = sd_file.seekSet(seekPos);
   Serial.println(seeked);
   Serial.println(percent);
@@ -317,14 +324,17 @@ void Song::loop() {
   switch(current_state) {
 
   case DIR_PLAY:
+//	  Serial.println("DIR");
     dir_play();
     break;
 
   case MP3_PLAY:
+	  //Serial.println("MP#");
     mp3_play();
     break;
 
   case IDLE:
+	  //Serial.println("IDLE");
     break;
   }
 }
@@ -434,6 +444,8 @@ void Song::sd_dir_setup() {
       num_songs++;
     }
   }
+  Serial.println("NM");
+  Serial.println(num_songs);
 }
 
 char* Song::getTitle(){
@@ -446,6 +458,10 @@ char* Song::getArtist(){
 
 char* Song::getAlbum(){
 	return tag.getAlbum();
+}
+
+char* Song::getTime(){
+	return tag.getTime();
 }
 
 // given the numerical index of a particular song to play, go to its location

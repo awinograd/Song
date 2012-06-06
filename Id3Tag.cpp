@@ -17,6 +17,7 @@
 #define max_artist_len 30
 #define max_album_len 40
 #define max_year_len 4
+#define max_time_len 10
 
 // next steps, declare the variables used later to represent microsd objects.
 extern SdFile*   sd_file;       // sd_file is the child of sd_root
@@ -30,6 +31,7 @@ extern char fn[max_name_len];
 char title[max_title_len + 1];
 char artist[max_artist_len + 1];
 char album[max_album_len + 1];
+char time[max_time_len + 1];
 
 
 //enum tagType { ID3v2, ID3v1, None }
@@ -56,6 +58,10 @@ char* Id3Tag::getArtist(){
 
 char* Id3Tag::getAlbum(){
 	return album;
+}
+
+char* Id3Tag::getTime(){
+	return time;
 }
 
 // this utility function reads id3v1 and id3v2 tags, if any are present, from
@@ -111,8 +117,16 @@ void Id3Tag::getId3Tag(char* value, unsigned char pb[], unsigned char c){
 	Serial.println("END getId3Tag");
 }
 
+void Id3Tag::clearBuffers(){
+	title[0] = '\0';
+	artist[0] = '\0';
+	album[0] = '\0';
+}
+
 void Id3Tag::scan() {
 	Serial.println("Id3Tag::scan()");
+	clearBuffers();
+
   unsigned char id3[3];       // pointer to the first 3 characters to read in
 
   // visit http://www.id3.org/id3v2.3.0 to learn all(!) about the id3v2 spec.
@@ -181,6 +195,10 @@ void Id3Tag::scan() {
 	  else if (pb[0] == 'T' && pb[1] == 'A' && pb[2] == 'L' && pb[3] == 'B') {
 		  Serial.println("album");
 		  getId3Tag(album, pb, c);
+	  }
+	  else if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'M' && pb[3] == 'E') {
+		  Serial.println("time");
+		  getId3Tag(time, pb, c);
 	  }
       else if (pb[1] == 'T' && pb[2] == 'T' && pb[3] == '2') {
 		  Serial.println("TT2");
