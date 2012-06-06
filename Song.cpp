@@ -196,17 +196,7 @@ int Song::seek(int percent) {
   if (percent < 0 || percent > 100) return 0;
   uint32_t size = sd_file.fileSize();
   uint32_t seekPos = percent * (getFileSize() / 100);
-Serial.println("-------------------------------------");
- Serial.print("Before: ");
-  Serial.println(sd_file.curPosition());
   seeked = sd_file.seekSet(seekPos);
-  Serial.print("After: ");
-  Serial.println(sd_file.curPosition());
-  Serial.println(seeked);
-  Serial.println(percent);
-  Serial.println(seekPos);
-  Serial.println(sd_file.fileSize());
-  Serial.println("-------------------------------------");
   return seekPos;
 }
 
@@ -224,8 +214,9 @@ void Song::dir_play() {
     // and the current_state is already set to IDLE from mp3_play()
 
     if (current_state == IDLE && nextFileExists()) {
-		handler->addKeyValuePair("message","Next Song", true);
+	  handler->addKeyValuePair("message","Next Song", true);
       nextFile();
+	  handler->respond();
       current_state = DIR_PLAY;
     }
   }
