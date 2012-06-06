@@ -21,7 +21,7 @@ class Song
 	int getVolume();
 	bool nextFile();
 	bool prevFile();
-	uint16_t getFileSize();
+	uint32_t getFileSize();
 	bool isPlaying();
 
 	char* getTitle();
@@ -46,6 +46,7 @@ class Song
 	void map_current_song_to_fn();
 
 	void initPlayerStateFromEEPROM();
+	void sendSongInfo(bool first);
 };
 
 #endif

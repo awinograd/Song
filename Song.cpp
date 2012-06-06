@@ -101,7 +101,11 @@ void Song::sendPlayerState(){
 }
 
 void Song::sendSongInfo(){
-  handler->addKeyValuePair("title", getTitle());
+	sendSongInfo(false);
+}
+
+void Song::sendSongInfo(bool first){
+  handler->addKeyValuePair("title", getTitle(), first);
   handler->addKeyValuePair("artist", getArtist());
   handler->addKeyValuePair("album", getAlbum());
   handler->addKeyValuePair("time", getTime());
@@ -114,8 +118,7 @@ void Song::sd_file_open() {
   map_current_song_to_fn();
   sd_file.open(&sd_root, fn, FILE_READ);
   tag.scan();
-  //sendPlayerState();
-
+  sendSongInfo();
 
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
@@ -157,10 +160,11 @@ bool Song::prevFile(){
 
   current_song--;
   sd_file_open();
-
+  
   EEPROM.write(EEPROM_TRACK, current_song);
   return true;
 }
+bool seeked;
 
 void Song::mp3_play() {
   unsigned char bytes[read_buffer]; // buffer to read and send to the decoder
@@ -168,7 +172,11 @@ void Song::mp3_play() {
 
     // send read_buffer bytes to be played. Mp3.play() tracks the index pointer
   // within the song being played of where to get the next read_buffer bytes.
-
+  if(seeked){
+	  Serial.println("POST SEEK:");
+	  Serial.println(sd_file.curPosition());
+	  seeked = false;
+  }
   bytes_to_read = sd_file.read(bytes, read_buffer);
   Mp3.play(bytes, bytes_to_read);
 
@@ -180,20 +188,25 @@ void Song::mp3_play() {
   }
 }
 
-uint16_t Song::getFileSize(){
+uint32_t Song::getFileSize(){
 	return sd_file.fileSize();
 }
 
 int Song::seek(int percent) {
   if (percent < 0 || percent > 100) return 0;
-  uint16_t size = sd_file.fileSize();
-  uint16_t seekPos = percent * (getFileSize() / 100);
-  sd_file.close();
-  bool seeked = sd_file.seekSet(seekPos);
+  uint32_t size = sd_file.fileSize();
+  uint32_t seekPos = percent * (getFileSize() / 100);
+Serial.println("-------------------------------------");
+ Serial.print("Before: ");
+  Serial.println(sd_file.curPosition());
+  seeked = sd_file.seekSet(seekPos);
+  Serial.print("After: ");
+  Serial.println(sd_file.curPosition());
   Serial.println(seeked);
   Serial.println(percent);
   Serial.println(seekPos);
-  Serial.println(getFileSize());
+  Serial.println(sd_file.fileSize());
+  Serial.println("-------------------------------------");
   return seekPos;
 }
 
@@ -211,6 +224,7 @@ void Song::dir_play() {
     // and the current_state is already set to IDLE from mp3_play()
 
     if (current_state == IDLE && nextFileExists()) {
+		handler->addKeyValuePair("message","Next Song", true);
       nextFile();
       current_state = DIR_PLAY;
     }

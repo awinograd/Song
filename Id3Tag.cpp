@@ -10,8 +10,8 @@
 // to 30 bytes maximum, but the length is not indicated within the tag. using
 // 60 bytes here is a compromise between holding most titles and saving sram.
 
-// if you increase this above 255, look for and change 'for' loop index types
-// so as to not to overflow the unsigned char data type.
+//allow file scanning to end early if all tags found
+#define MAX_NUM_TAGS 3
 
 #define max_title_len 60
 #define max_artist_len 30
@@ -68,7 +68,7 @@ char* Id3Tag::getTime(){
 // mp3 audio files. if no tags are found, just use the title of the file. :-|
 
 void Id3Tag::getId3Tag(char* value, unsigned char pb[], unsigned char c){
-	Serial.println("getId3Tag");
+	//Serial.println("getId3Tag");
 	// found an id3v2.3 frame! the length is in the next 4 bytes.
         
     sd_file->read(pb, 4);
@@ -124,8 +124,9 @@ void Id3Tag::clearBuffers(){
 }
 
 void Id3Tag::scan() {
-	Serial.println("Id3Tag::scan()");
+	//Serial.println("Id3Tag::scan()");
 	clearBuffers();
+	int numTagsFound = 0;
 
   unsigned char id3[3];       // pointer to the first 3 characters to read in
 
@@ -138,7 +139,7 @@ void Id3Tag::scan() {
   // if these first 3 characters are 'ID3', then we have an id3v2 tag. if so,
   // a 'TIT2' (for ver2.3) or 'TT2' (for ver2.2) frame holds the song title.
   if (id3[0] == 'I' && id3[1] == 'D' && id3[2] == '3') {
-	  Serial.println("ID3");
+	  //Serial.println("ID3");
     unsigned char pb[4];       // pointer to the last 4 characters we read in
     unsigned char c;           // the next 1 character in the file to be read
     
@@ -183,25 +184,28 @@ void Id3Tag::scan() {
 
 	  //Serial.print(c);
 
-	  //if (pb[0] == 'T' && pb[1] == 'P' && pb[2] == 'E' && pb[3] == '1') {
       if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'T' && pb[3] == '2') {
-		  Serial.println("title");
+		  numTagsFound++;
+		  //Serial.println("title");
 		  getId3Tag(title, pb, c);
       }
 	  else if (pb[0] == 'T' && pb[1] == 'P' && pb[2] == 'E' && pb[3] == '1') {
-		  Serial.println("artist");
+		  numTagsFound++;
+		  //Serial.println("artist");
 		  getId3Tag(artist, pb, c);
 	  }
 	  else if (pb[0] == 'T' && pb[1] == 'A' && pb[2] == 'L' && pb[3] == 'B') {
-		  Serial.println("album");
+		  numTagsFound++;
+		  //Serial.println("album");
 		  getId3Tag(album, pb, c);
 	  }
-	  else if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'M' && pb[3] == 'E') {
+	  /*else if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'M' && pb[3] == 'E') {
 		  Serial.println("time");
 		  getId3Tag(time, pb, c);
-	  }
+	  }*/
       else if (pb[1] == 'T' && pb[2] == 'T' && pb[3] == '2') {
-		  Serial.println("TT2");
+		  numTagsFound++;
+		  //Serial.println("TT2");
         // found an id3v2.2 frame! the title's length is in the next 3 bytes,
         // but we read in 4 then ignore the last, which is the text encoding.
         
@@ -267,5 +271,5 @@ void Id3Tag::scan() {
   }
   
   sd_file->seekSet(0);
-  Serial.println("exit id3tag");
+  //Serial.println("exit id3tag");
 }

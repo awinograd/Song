@@ -8,7 +8,7 @@ HardwareSerial Uart = HardwareSerial();
 
 #define UART_BUFFER_SIZE 50
 
-char response[120];
+char response[160];
 
 JsonHandler::JsonHandler(){
 }
@@ -90,6 +90,7 @@ void JsonHandler::addKeyValuePair(const char* key, const char* val){
 }
 
 void JsonHandler::respond(){
+	Serial.println(strlen(response));
     Serial.println(response);
 	Uart.print(response);
 	Uart.print(END_CMD_CHAR);
