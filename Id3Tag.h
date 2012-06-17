@@ -5,9 +5,7 @@ class Id3Tag
 {
   public:
 	Id3Tag();
-	//Id3Tag(SdFile* file);
-	void setSDFile(SdFile* file);
-	void scan();
+	void scan(SdFile* sd_file);
 
 	char* getTitle();
 	char* getArtist();
@@ -15,7 +13,7 @@ class Id3Tag
 	char* getTime();
 	char* getTag(const char* tag);
   private:
-	void getId3Tag(char* value, unsigned char pb[], unsigned char c);
+	void getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c);
 	void clearBuffers();
 };
 

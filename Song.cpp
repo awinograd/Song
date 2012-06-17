@@ -129,7 +129,7 @@ Serial.println("sd_file_open()");
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
   //sd_file.open(&sd_root, current_song, FILE_READ);
-  tag.scan();
+  tag.scan(&sd_file);
   sendSongInfo();
 }
 
@@ -265,7 +265,6 @@ int Song::getVolume(){
 
 Song::Song() {
 	tag = Id3Tag();
-	tag.setSDFile(&sd_file);
 }
 
 void Song::initPlayerStateFromEEPROM(){
@@ -396,22 +395,6 @@ void Song::loop() {
 
 
 
-
-
-
-
-
-/*
- * example sketch to play audio file(s) in a directory, using the mp3 library
- * for playback and the arduino sd library to read files from a microsd card.
- * pins are setup to work well for teensy 2.0. double-check if using arduino.
- * 
- * originally based on frank zhao's player: http://frank.circleofcurrent.com/
- * utilities adapted from previous versions of the functions by matthew seal.
- *
- * (c) 2011 david sirkin sirkin@cdr.stanford.edu
- *          akil srinivasan akils@stanford.edu
- */
 
 // check that the microsd card is present, can be initialized and has a valid
 // root volume. a pointer to the card's root object is returned as sd_root.

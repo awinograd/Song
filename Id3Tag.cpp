@@ -19,9 +19,6 @@
 #define max_year_len 4
 #define max_time_len 10
 
-// next steps, declare the variables used later to represent microsd objects.
-extern SdFile*   sd_file;       // sd_file is the child of sd_root
-
 extern char fn[max_name_len];
 
 // an array to hold the current_song's title in ram. it needs 1 extra char to
@@ -33,19 +30,9 @@ char artist[max_artist_len + 1];
 char album[max_album_len + 1];
 char time[max_time_len + 1];
 
-
 //enum tagType { ID3v2, ID3v1, None }
 
 Id3Tag::Id3Tag(){
-	sd_file = NULL;
-}
-
-/*Id3Tag::Id3Tag(Sdfile* file){
-	sd_file = file;
-}*/
-
-void Id3Tag::setSDFile(SdFile* file){
-	sd_file = file;
 }
 
 char* Id3Tag::getTitle(){
@@ -67,7 +54,7 @@ char* Id3Tag::getTime(){
 // this utility function reads id3v1 and id3v2 tags, if any are present, from
 // mp3 audio files. if no tags are found, just use the title of the file. :-|
 
-void Id3Tag::getId3Tag(char* value, unsigned char pb[], unsigned char c){
+void Id3Tag::getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c){
 	//Serial.println("getId3Tag");
 	// found an id3v2.3 frame! the length is in the next 4 bytes.
         
@@ -127,7 +114,7 @@ void Id3Tag::clearBuffers(){
 	album[0] = '\0';
 }
 
-void Id3Tag::scan() {
+void Id3Tag::scan(SdFile* sd_file){
 	//Serial.println("Id3Tag::scan()");
 	clearBuffers();
 	int numTagsFound = 0;
@@ -191,17 +178,17 @@ void Id3Tag::scan() {
       if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'T' && pb[3] == '2') {
 		  numTagsFound++;
 		  //Serial.println("title");
-		  getId3Tag(title, pb, c);
+		  getId3Tag(sd_file, title, pb, c);
       }
 	  else if (pb[0] == 'T' && pb[1] == 'P' && pb[2] == 'E' && pb[3] == '1') {
 		  numTagsFound++;
 		  //Serial.println("artist");
-		  getId3Tag(artist, pb, c);
+		  getId3Tag(sd_file, artist, pb, c);
 	  }
 	  else if (pb[0] == 'T' && pb[1] == 'A' && pb[2] == 'L' && pb[3] == 'B') {
 		  numTagsFound++;
 		  //Serial.println("album");
-		  getId3Tag(album, pb, c);
+		  getId3Tag(sd_file, album, pb, c);
 	  }
 	  /*else if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'M' && pb[3] == 'E') {
 		  Serial.println("time");
