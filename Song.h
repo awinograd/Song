@@ -6,6 +6,7 @@
 #ifndef SONG_H
 #define SONG_H
 
+#include <Id3Tag.h>
 #include <JsonHandler.h>
 
 class Song

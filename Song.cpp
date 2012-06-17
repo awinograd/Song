@@ -11,13 +11,11 @@
  */
 
 // first step is to include (arduino) sd, eeprom, and (our own) mp3 and lcd libraries.
-
 #include <SD.h>
 #include <EEPROM.h>
 
 #include <mp3.h>
 #include <mp3conf.h>
-#include <Id3Tag.h>
 #include <Song.h>
 
 // setup microsd, decoder, and lcd chip pins
@@ -49,7 +47,7 @@
 
 #define FILE_NAMES_START 32 //leave some room for persisting play info (vol, track, etc.)
 #define max_name_len  13
-#define max_num_songs 40
+#define max_num_songs 30//100
 
 // id3v2 tags have variable-length song titles. that length is indicated in 4
 // bytes within the tag. id3v1 tags also have variable-length song titles, up
@@ -117,7 +115,8 @@ void Song::sendSongInfo(bool first){
 }
 
 void Song::sd_file_open() {
-	Serial.println("sd_file_open()");
+
+Serial.println("sd_file_open()");
 	sd_file.close();
 
   //reset position
@@ -126,14 +125,12 @@ void Song::sd_file_open() {
 
   map_current_song_to_fn();
   sd_file.open(&sd_root, fn, FILE_READ);
-  tag.scan();
-  sendSongInfo();
-
 
   // if you prefer to work with the current song index (only) instead of file
   // names, this version of the open command should also work for you:
-
   //sd_file.open(&sd_root, current_song, FILE_READ);
+  tag.scan();
+  sendSongInfo();
 }
 
 bool Song::nextFileExists(){
@@ -149,7 +146,9 @@ bool Song::nextFile(){
 	  return false;
   }
 
-  current_song++;// = (current_song + 1) % num_songs; 
+  current_song = (current_song + 1) % num_songs; 
+  Serial.println(current_song);
+  Serial.println(num_songs);
   sd_file_open();
 
   EEPROM.write(EEPROM_TRACK, current_song);
