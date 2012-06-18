@@ -47,7 +47,7 @@
 
 #define FILE_NAMES_START 32 //leave some room for persisting play info (vol, track, etc.)
 #define max_name_len  13
-#define max_num_songs 30//100
+#define max_num_songs 40//0
 
 // id3v2 tags have variable-length song titles. that length is indicated in 4
 // bytes within the tag. id3v1 tags also have variable-length song titles, up
@@ -109,6 +109,8 @@ void Song::sendSongInfo(bool first){
   handler->addKeyValuePair("title", getTitle(), first);
   handler->addKeyValuePair("artist", getArtist());
   handler->addKeyValuePair("album", getAlbum());
+  handler->addKeyValuePair("songNumber", current_song);
+  //handler->addKeyValuePair("filename", fn);
   //handler->addKeyValuePair("time", getTime());
   handler->addKeyValuePair("position", currPosition);
   handler->addKeyValuePair("state", isPlaying() ? "PLAYING" : "PAUSED" );
@@ -131,6 +133,12 @@ Serial.println("sd_file_open()");
   //sd_file.open(&sd_root, current_song, FILE_READ);
   tag.scan(&sd_file);
   sendSongInfo();
+}
+
+void Song::setSong(int songNumber){
+	current_song = songNumber;
+	sd_file_open();
+	EEPROM.write(EEPROM_TRACK, current_song);
 }
 
 bool Song::nextFileExists(){
@@ -324,7 +332,7 @@ void Song::setup(JsonHandler *_handler){
   // putting all of the root directory's songs into eeprom saves flash space.
 
   sd_dir_setup();
-  sd_file_open();
+//  sd_file_open();
 
   //can't be read with other EEPROM settings b/c sd_file_open resets currPosition
   //no need to worry about reading un-inited value b/c the initEEPROM case sets currPos
@@ -385,17 +393,6 @@ void Song::loop() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // check that the microsd card is present, can be initialized and has a valid
 // root volume. a pointer to the card's root object is returned as sd_root.
 
@@ -422,12 +419,17 @@ void Song::sd_card_setup() {
 // instructor.
 
 void Song::sd_dir_setup() {
+	int oldCurrentSong = current_song;
+  handler->respondString("{\"command\": \"LIBRARY\",\"songs\":[");
   dir_t p;
   num_songs = 0;
   
   sd_root.rewind();
   
   while (sd_root.readDir(&p) > 0 && num_songs < max_num_songs) {
+	  if(num_songs != 0){
+		handler->respondString(",");
+	  }
     // break out of while loop when we wrote all files (past the last entry).
 
     if (p.name[0] == DIR_NAME_FREE) {
@@ -467,11 +469,25 @@ void Song::sd_dir_setup() {
       // add an 'end of string' character to signal the end of the file name.
     
       EEPROM.write(FILE_NAMES_START + num_songs * max_name_len + pos, '\0');
-      num_songs++;
+	  current_song = num_songs;
+	  map_current_song_to_fn();
+	  //Serial.println("-------------------------------");
+	  //Serial.println(fn);
+	  sd_file.close();
+	  sd_file.open(&sd_root, fn, FILE_READ);
+	  
+		  Serial.println(getFileSize());
+	 
+	  tag.scan(&sd_file);
+	  sendSongInfo(true);
+	  handler->respond(false);
+	  num_songs++;
     }
   }
-  Serial.println("NM");
-  Serial.println(num_songs);
+  //Serial.println("NM");
+  //Serial.println(num_songs);
+  handler->respondString("]}!");
+  current_song = oldCurrentSong;
 }
 
 char* Song::getTitle(){

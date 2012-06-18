@@ -22,6 +22,7 @@ class Song
 	int getVolume();
 	bool nextFile();
 	bool prevFile();
+	void setSong(int songNumber);
 	uint32_t getFileSize();
 	bool isPlaying();
 
