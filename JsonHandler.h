@@ -12,6 +12,8 @@ class JsonHandler
 	JsonHandler();
 	void setup();
 	void respond();
+	void respond(bool endChar);
+	void respondString(char* data);
 	bool inputAvailable();
 	void readCommand(char* buffer, char* data);
 
