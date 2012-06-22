@@ -47,7 +47,7 @@
 
 #define FILE_NAMES_START 32 //leave some room for persisting play info (vol, track, etc.)
 #define max_name_len  13
-#define max_num_songs 30//0
+#define max_num_songs 30
 
 // id3v2 tags have variable-length song titles. that length is indicated in 4
 // bytes within the tag. id3v1 tags also have variable-length song titles, up
@@ -427,9 +427,6 @@ void Song::sd_dir_setup() {
   sd_root.rewind();
   
   while (sd_root.readDir(&p) > 0 && num_songs < max_num_songs) {
-	  if(num_songs != 0){
-		handler->respondString(",");
-	  }
     // break out of while loop when we wrote all files (past the last entry).
 
     if (p.name[0] == DIR_NAME_FREE) {
@@ -452,7 +449,9 @@ void Song::sd_dir_setup() {
     
     if ((p.name[8] == 'M' && p.name[9] == 'P' && p.name[10] == '3') ||
         (p.name[8] == 'W' && p.name[9] == 'A' && p.name[10] == 'V')) {
-
+	  if(num_songs != 0){
+		handler->respondString(",");
+	  }
       // store each character of the file name into an individual byte in the
       // eeprom. sd_file->name doesn't return the '.' part of the name, so we
       // add that back later when we read the file from eeprom.
