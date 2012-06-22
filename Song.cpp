@@ -47,7 +47,7 @@
 
 #define FILE_NAMES_START 32 //leave some room for persisting play info (vol, track, etc.)
 #define max_name_len  13
-#define max_num_songs 40//0
+#define max_num_songs 30//0
 
 // id3v2 tags have variable-length song titles. that length is indicated in 4
 // bytes within the tag. id3v1 tags also have variable-length song titles, up
@@ -476,8 +476,6 @@ void Song::sd_dir_setup() {
 	  sd_file.close();
 	  sd_file.open(&sd_root, fn, FILE_READ);
 	  
-		  Serial.println(getFileSize());
-	 
 	  tag.scan(&sd_file);
 	  sendSongInfo(true);
 	  handler->respond(false);

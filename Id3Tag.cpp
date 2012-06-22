@@ -13,6 +13,7 @@
 //allow file scanning to end early if all tags found
 #define MAX_NUM_TAGS 3
 
+#define BUFF_SIZE 400
 #define max_title_len 60
 #define max_artist_len 30
 #define max_album_len 40
@@ -54,8 +55,11 @@ char* Id3Tag::getTime(){
 // this utility function reads id3v1 and id3v2 tags, if any are present, from
 // mp3 audio files. if no tags are found, just use the title of the file. :-|
 
-void Id3Tag::getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c){
+void Id3Tag::getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c, int j){
+	uint32_t origPos = sd_file->curPosition();
+	sd_file->seekCur(-j);
 	//Serial.println("getId3Tag");
+	//Serial.println(sd_file->curPosition());
 	// found an id3v2.3 frame! the length is in the next 4 bytes.
         
     sd_file->read(pb, 4);
@@ -106,6 +110,7 @@ void Id3Tag::getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigne
 	//Serial.print("value: ");
 	//Serial.println(value);
 	//Serial.println("END getId3Tag");
+	sd_file->seekSet(origPos);
 }
 
 void Id3Tag::clearBuffers(){
@@ -148,23 +153,27 @@ void Id3Tag::scan(SdFile* sd_file){
     // to shift each one over to get it into its correct 'digits' position. a
     // quirk of the spec is that bit 7 (the msb) of each byte is set to 0.
     
-	//TODO calculate properly
     unsigned long v2l = ((unsigned long) pb[0] << (7 * 3)) +
                         ((unsigned long) pb[1] << (7 * 2)) +
                         ((unsigned long) pb[2] << (7 * 1)) + pb[3];
-                        
+	v2l /= 8; 
     // we just moved the file pointer 10 bytes into the file, so we reset it.
     
     sd_file->seekSet(0);
 
-	Serial.print("id3 header length: ");
-	Serial.println(v2l);
+	//Serial.print("id3 header length: ");
+	//Serial.println(v2l);
+	
+	char buff[BUFF_SIZE+1];
 
-    for(int i = 0; i < 9000; i++){
+    for(int i = 0; i < v2l; i+=BUFF_SIZE){
+		sd_file->read(buff, BUFF_SIZE);
+		buff[BUFF_SIZE] = 0;
+		for(int j = 0; j < BUFF_SIZE; j++){
       // read in bytes of the file, one by one, so we can check for the tags.
       
-      sd_file->read(&c, 1);
-
+      //sd_file->read(&c, 1);
+	  c = buff[j];
       // keep shifting over previously-read bytes as we read in each new one.
       // that way we keep testing if we've found a 'TIT2' or 'TT2' frame yet.
       
@@ -178,17 +187,18 @@ void Id3Tag::scan(SdFile* sd_file){
       if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'T' && pb[3] == '2') {
 		  numTagsFound++;
 		  //Serial.println("title");
-		  getId3Tag(sd_file, title, pb, c);
+		  getId3Tag(sd_file, title, pb, c, BUFF_SIZE-j-1);
       }
 	  else if (pb[0] == 'T' && pb[1] == 'P' && pb[2] == 'E' && pb[3] == '1') {
 		  numTagsFound++;
 		  //Serial.println("artist");
-		  getId3Tag(sd_file, artist, pb, c);
+		  getId3Tag(sd_file, artist, pb, c, BUFF_SIZE-j-1);
 	  }
 	  else if (pb[0] == 'T' && pb[1] == 'A' && pb[2] == 'L' && pb[3] == 'B') {
 		  numTagsFound++;
 		  //Serial.println("album");
-		  getId3Tag(sd_file, album, pb, c);
+		  getId3Tag(sd_file, album, pb, c, BUFF_SIZE-j-1);
+		  
 	  }
 	  /*else if (pb[0] == 'T' && pb[1] == 'I' && pb[2] == 'M' && pb[3] == 'E') {
 		  Serial.println("time");
@@ -227,6 +237,7 @@ void Id3Tag::scan(SdFile* sd_file){
         break;
       }
     }
+	}
   }
   else {
     // the file doesn't have an id3v2 tag so search for an id3v1 tag instead.

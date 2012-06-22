@@ -13,7 +13,7 @@ class Id3Tag
 	char* getTime();
 	char* getTag(const char* tag);
   private:
-	void getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c);
+	void getId3Tag(SdFile* sd_file, char* value, unsigned char pb[], unsigned char c, int j);
 	void clearBuffers();
 };
 

@@ -105,7 +105,7 @@ void JsonHandler::respond(){
 }
 
 void JsonHandler::respond(bool endChar){
-	Serial.println(strlen(response));
+	//Serial.println(strlen(response));
     Serial.println(response);
 	Uart.print(response);
 	if(endChar){
